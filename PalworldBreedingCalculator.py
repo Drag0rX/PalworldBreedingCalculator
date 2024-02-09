@@ -127,7 +127,6 @@ def mostDirectPath():
 			required = []
 			for pal in path:
 				required.append(pal[1])
-			required.pop(0)
 			
 			pals.append(c)
 			shortestPath.append([a,b,c])
@@ -157,10 +156,11 @@ def mostDirectPath():
 		
 		
 		if fixedPathLen == 0:
-			shortestPathLength = len(shortestPath)-1
+			shortestPathLength = len(shortestPath)
 		# check if next will become too long
 		if len(path)+1 >= shortestPathLength:
 			return
+		
 		
 		# check for more paths using unlisted pals
 		b = 1
@@ -194,7 +194,6 @@ def mostDirectPath():
 
 		return
 	
-	path.append([parent,parent,parent])
 	pathStep(parent)
 	
 	
