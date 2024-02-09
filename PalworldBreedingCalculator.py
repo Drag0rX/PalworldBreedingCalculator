@@ -5,7 +5,7 @@ Created on Wed Feb  7 00:02:46 2024
 @author: Joshua Hicks
 """
 
-#%% SETUP DATA
+#%% DATA
 
 import pandas as pd
 
@@ -15,7 +15,7 @@ data = pd.read_excel('Data.xlsx',sheet_name='EnumedData')
 #data = pd.read_excel('Data.xlsx',sheet_name='CombinationsUnpivot')
 
 
-#%% SETUP FUNCTIONS
+#%% ENUM FUNCTIONS
 
 # pal to enum
 def palToEnum(pal):
@@ -50,37 +50,6 @@ def enumToPalArr(enums):
 	return output
 
 
-#%% SETUP TARGETS
-
-	# 0 Lamball, 2 Chikipi, 25 Mau, 17 Teafant
-	# 111 Mammorest Cryst
-	# Jolthog, Ragnahawk
-	# Depresso
-	parent = "Jolthog"
-	child = "Ragnahawk"
-	# provide a list of already captured pal usable for breeding
-	available = []
-	# exclude as a capture option
-	exclude = ["Gumoss (Special)", 
-			   "Jormuntide Ignis", 
-			   "Paladius", 
-			   "Necromus",
-			   "Frostallion", 
-			   "Frostallion Noct", 
-			   "Jetragon", 
-			   "Blazamut"]
-	
-	maxPathLen = 5
-	fixedPathLen = 0
-	
-	noUseChild = 0
-
-	#convert to enum
-	parent = palToEnum(parent)
-	child = palToEnum(child)
-	available = palToEnumArr(available)
-	exclude = palToEnumArr(exclude)
-
 
 #%% MOST DIRECT PATH
 
@@ -88,13 +57,9 @@ def enumToPalArr(enums):
 #if one parent and one child, find shortest path
 	# if available list provided, priorotise using them for shortest path
 
-def mostDirectPath():
-	global parent
-	global child
-	global maxPathLen
-	global fixedPathLen
-	global noUseChild
-	global available
+def mostDirectPath(parent, child, available, exclude, 
+				   initPathLen = 3, maxPathLen = 4, 
+				   fixedPathLen = 0, noUseChild = 0):
 	
 	pals = available.copy()
 	pals.append(parent)
@@ -111,7 +76,7 @@ def mostDirectPath():
 		print("Parent and child must be different.")
 		return 0
 	
-	shortestPath = [-1]*maxPathLen
+	shortestPath = [-1]*initPathLen
 	shortestPathLength = fixedPathLen+1
 	path = []
 	
@@ -119,7 +84,7 @@ def mostDirectPath():
 		nonlocal shortestPath
 		nonlocal path
 		nonlocal pals
-		global exclude
+		nonlocal exclude
 		
 		c = data[a][b]
 		if c == child:
@@ -145,9 +110,9 @@ def mostDirectPath():
 		nonlocal shortestPath
 		nonlocal path
 		nonlocal shortestPathLength
-		global child
-		global noUseChild
-		global exclude
+		nonlocal child
+		nonlocal noUseChild
+		nonlocal exclude
 		
 		# check for child using new pal against current pals
 		for b in pals:
@@ -199,14 +164,56 @@ def mostDirectPath():
 	
 	# return shortest path
 	if shortestPath[0] != -1:
-		return
+		return 1
 	else:
-		print("No path available.")
-		return
+		# try with next path size up
+		if initPathLen < maxPathLen:
+			return mostDirectPath(parent, child, available, exclude, 
+				  initPathLen+1, maxPathLen, fixedPathLen, noUseChild)
+		return 0
 
 #%% RUN
 
-mostDirectPath()
+# provide a list of already captured pal usable for breeding
+available = []
+# exclude as a capture option
+exclude = ["Gumoss (Special)", 
+		   "Jormuntide Ignis", 
+		   "Paladius", 
+		   "Necromus",
+		   "Frostallion", 
+		   "Frostallion Noct", 
+		   "Jetragon", 
+		   "Blazamut"]
+
+# NOTE, for initPathLen and maxPathLen, it will RETRY every inbetween path, 
+# I would recommend keeping these as 3 & 4 respectively, or using fixedPathLen
+# to find all paths with EXACTLY n number
+
+# this will intially start checking paths of n value
+# if it finds a shorter path, it will only check from 
+# then on for that size or less
+# initPathLen = 3 (default 3)
+
+# this will stop checking if it reaches n value in path length
+# maxPathLen = 4 (default 4)
+
+# this will forgo the above path lengths, and always look for n path length
+# AND ONLY n path length, nothing shorter nor longer
+# fixedPathLen = 0 (default 0, 0 skip, n forced value)
+
+# skips using the inital child as a parent in calculations
+# noUseChild = 0 (default 0, 1 keep, 0 skip)
+
+
+# mostDirectPath(parent enum, child enum, 
+# 				 available enum list, exclude enum list, 
+# 				 initPathLen, maxPathLen, fixedPathLen, noUseChild)
+if mostDirectPath(palToEnum("Lamball"), palToEnum("Mammorest Cryst"), 
+			   palToEnumArr(available), palToEnumArr(exclude)):
+	print("Success!")
+else:
+	print("No path available.")
 
 
 #%% LEAST PALS FOR ALL PALS
